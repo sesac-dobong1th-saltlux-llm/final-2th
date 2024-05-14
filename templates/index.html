@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>홈핏메인 - 챗봇</title>
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', path='css/style.css')}}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="logo" href="{{url_for('home')}}"><img src="{{url_for('static', path='images/logo.png')}}" alt="Logo"></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+            </ul>
+        </div>
+        <div class="login_text"><a href="{{url_for('login')}}">로그인</a></div>
+    </nav>
+
+    <div class="banner_section layout_padding">
+        <div class="container">
+            <h1 class="best_taital">내집찾기</h1>
+            <div id="chatbox" class="chatbox">
+                <div class="messages_container" style="overflow-y: auto; height: 80%;"></div>
+                <form action="/input_process" method="post" class="input_form">
+                    <input type="text" class="email_bt" placeholder="나에게 딱 맞는 집을 챗봇이 알려줄거에요! 물어보세요!" id="userInput" name="user_input">
+                    <button type="submit" class="subscribe_bt">전송</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script>
+    async function sendMessage(event) {
+    if (event) event.preventDefault();
+
+    let userInput = document.getElementById("userInput").value;
+    if (!userInput.trim()) return;
+
+    appendMessage(`You: ${userInput}`, 'user-message');
+    document.getElementById("userInput").value = "";
+
+    let response = await fetch('/input_process', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'user_input': userInput
+        })
+    });
+
+    let result = await response.json();
+    // 수정된 simulateTyping 호출 부분
+    simulateTyping(`홈핏봇: ${result.message}` || "Sorry, I didn't get that.", 'bot-response');
+
+}
+
+function appendMessage(text, className) {
+    let messageElement = document.createElement('p');
+    messageElement.classList.add(className);
+    messageElement.textContent = text;
+    document.querySelector('.messages_container').appendChild(messageElement);
+    forceScrollToBottom();
+}
+
+function simulateTyping(message, className) {
+    let index = 0;
+    let messageElement = document.createElement('p');
+    messageElement.classList.add(className);
+    document.querySelector('.messages_container').appendChild(messageElement);
+
+    function typeChar() {
+        if (index < message.length) {
+            messageElement.textContent += message[index++];
+            setTimeout(typeChar, 50); // 30밀리세컨드 딜레이 적용
+        }
+    }
+    typeChar();
+    forceScrollToBottom();
+}
+
+function forceScrollToBottom() {
+    let messagesContainer = document.querySelector('.messages_container');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+document.querySelector('.input_form').addEventListener('submit', sendMessage);
+
+    </script>
+</body>
+</html>
